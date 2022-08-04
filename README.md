@@ -18,3 +18,17 @@ User-Interface library designed to be used with pygame
 1. Clone the repo
 ``git clone https://github.com/milkmull/ui.git``
 2. Install dependencies
+
+### Basic Usage
+```python
+from ui import ui
+from ui.menu.menu import Menu
+
+ui.init(size=(1024, 576))
+
+def get_elements(menu):
+    return []
+        
+m = Menu(get_elements)
+m.run()
+```

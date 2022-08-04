@@ -8,11 +8,10 @@ from ..utils.image import get_arrow
 
 class Flipper_Base:
     default_arrow_kwargs = {
-        'size': (10, 10)
+    
     }
 
     default_button_kwargs = {
-        'size': (20, 20),
         'hover_color': (100, 100, 100),
         'border_radius': 10
     }
@@ -32,10 +31,15 @@ class Flipper_Base:
         self.selection = selection
         self.index = index
         
+        if 'size' not in arrow_kwargs:
+            arrow_kwargs['size'] = (self.height - 11, self.height - 11)
         left_arrow = get_arrow(
             '<',
             **(Flipper_Base.default_arrow_kwargs | arrow_kwargs)
         )
+        
+        if 'pad' not in button_kwargs:
+            button_kwargs['pad'] = 11
         left_button = Button.Image_Button(
             image=left_arrow,
             **(Flipper_Base.default_button_kwargs | button_kwargs)
@@ -75,7 +79,7 @@ class Flipper:
         }
         
         @classmethod
-        def counter(cls, range, *args, **kwargs):
+        def Counter(cls, range, *args, **kwargs):
             return cls([str(i) for i in range], *args, **kwargs)
         
         def __init__(

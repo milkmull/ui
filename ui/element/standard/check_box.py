@@ -33,6 +33,9 @@ class Check_Box(Text_Element):
     def get_value(self):
         return self.value
         
+    def get_state(self):
+        return self.value
+        
     def set_value(self, value):
         self.value = value
         if value:
@@ -44,6 +47,7 @@ class Check_Box(Text_Element):
         self.set_value(not self.value)
         
     def left_click(self):
-        super().left_click()
         self.flip_value()
+        super().left_click()
+        
             

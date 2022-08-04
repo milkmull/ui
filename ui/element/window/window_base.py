@@ -52,6 +52,8 @@ class Window_Base:
             'dir': 0, 
             'marginx': 0,
             'marginy': 0,
+            'borderx': 0,
+            'bordery': 0,
             'centerx_aligned': False,
             'centery_aligned': False
         }
@@ -59,6 +61,10 @@ class Window_Base:
     @property
     def visible_elements(self):
         return [e for e in self.elements if self.rect.colliderect(e.rect)]
+        
+    @property
+    def all_children(self):
+        return super().all_children | set(self.elements)
         
     def compare_elements(self, elements):
         return all({e0 == e1 for e0, e1 in zip(self.elements, elements)})
@@ -91,9 +97,15 @@ class Window_Base:
         elements, 
         
         dir=1,
+        
         marginx=0,
         marginy=0,
         margin=None,
+        
+        borderx=0,
+        bordery=0,
+        border=None,
+        
         centerx_aligned=False,
         centery_aligned=False,
         
@@ -105,14 +117,19 @@ class Window_Base:
             dir = self.orientation_cache['dir']
             marginx = self.orientation_cache['marginx']
             marginy = self.orientation_cache['marginy']
+            borderx = self.orientation_cache['borderx']
+            bordery = self.orientation_cache['bordery']
             centerx_aligned = self.orientation_cache['centerx_aligned']
             centery_aligned = self.orientation_cache['centery_aligned']
             
-        elif margin is not None:
-            marginx = marginy = margin
+        else:
+            if margin is not None:
+                marginx = marginy = margin
+            if border is not None:
+                borderx = bordery = border
 
-        x = marginx
-        y = marginy
+        x = borderx
+        y = bordery
         
         max_width, max_height = self.rect.size
         
@@ -175,7 +192,7 @@ class Window_Base:
                 
         if current_line:
             block.add(current_line)
-        block._rect = block.rect.inflate(2 * marginx, 2 * marginy)
+        block._rect = block.rect.inflate(2 * borderx, 2 * bordery)
    
         if centerx_aligned and not self.inf_width:
             for line in (block.swap() if dir else block):
@@ -200,6 +217,8 @@ class Window_Base:
             'dir': dir, 
             'marginx': marginx,
             'marginy': marginy,
+            'borderx': borderx,
+            'bordery': bordery,
             'centerx_aligned': centerx_aligned,
             'centery_aligned': centery_aligned
         }

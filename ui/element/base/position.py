@@ -86,8 +86,17 @@ class Position(Base_Element):
         
     @property
     def total_rect(self):
-        self.update_position(all=True)
-        return self.rect.unionall([c.total_rect for c in self.children])
+        self.update_position()
+        return self.rect.unionall([c.total_rect for c in self.children if c.visible])
+        
+    @property
+    def all_children(self):
+        children = set()
+        for c in self.children:
+            children.add(c)
+            if hasattr(c, 'all_children'):
+                children |= c.all_children
+        return children
 
     @property
     def size(self):
@@ -127,7 +136,7 @@ class Position(Base_Element):
         
     @width.setter
     def width(self, width):
-        self.rect.width = width
+        self.size = (width, self.rect.height)
         
     @property
     def height(self):
@@ -135,7 +144,7 @@ class Position(Base_Element):
         
     @height.setter
     def height(self, height):
-        self.rect.height = height
+        self.size = (self.rect.width, height)
 
     @property
     def first_born(self):
@@ -169,6 +178,7 @@ class Position(Base_Element):
     def add_child(self, child, **kwargs):
         if child not in self.children:
             self.children.append(child)
+        child.parent = None
         child.set_parent(self, **kwargs)    
         
     def remove_child(self, child):
@@ -182,6 +192,14 @@ class Position(Base_Element):
         for c in self.children:
             c.update_position()
             c.move_children()
+            
+    def hit_any(self):
+        p = pg.mouse.get_pos()
+        if self.rect.collidepoint(p):
+            return True
+        for c in self.children:
+            if c.hit_any():
+                return True
             
     def copy_position(self, other):
         self.parent = other.parent
@@ -202,6 +220,10 @@ class Position(Base_Element):
             else:
                 self.stuck_pos = getattr(self.rect, anchor)
             self.stuck_anchor = anchor
+            
+    def swap_stuck(self, other):
+        self.stuck_pos, other.stuck_pos = other.stuck_pos, self.stuck_pos
+        self.stuck_anchor, other.stuck_anchor = other.stuck_anchor, self.stuck_anchor
 
     def set_limits(
         self,
@@ -296,6 +318,8 @@ class Position(Base_Element):
             left_limit = right_limit = top_limit = bottom_limit = 0
             
         if center:
+            centerx_anchor = 'centerx'
+            centery_anchor = 'centery'
             centerx_offset = centery_offset = 0
             
         self.set_limits(

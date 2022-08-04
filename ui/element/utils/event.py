@@ -7,6 +7,7 @@ class Event:
         args=None,
         kwargs=None,
         
+        no_call=False,
         tag=''
     ):
         self.func = func
@@ -14,11 +15,15 @@ class Event:
         self.kwargs = kwargs if kwargs is not None else {}
         self.return_value = None
         
+        self.no_call = no_call
         self.tag = tag
         
     def __call__(self):
         if self.func is not None:
-            self.return_value = self.func(*self.args, **self.kwargs)
+            self.return_value = self.func(
+                *[(a if self.no_call or not callable(a) else a()) for a in self.args],
+                **{key: (value if self.no_call or not callable(value) else value()) for key, value in self.kwargs.items()}
+            )
         
     def set_args(self, *args, **kwargs):
         self.args = args

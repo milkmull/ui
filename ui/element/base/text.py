@@ -1,3 +1,5 @@
+import re
+
 import pygame as pg
 import pygame.freetype
 
@@ -88,6 +90,7 @@ class Text:
 
         inf_width=False,
         inf_height=False,
+        wrap=True,
         
         const_size=False,
         auto_fit=False,
@@ -102,6 +105,7 @@ class Text:
         self.line_spacing = line_spacing
 
         self.text_color = text_color
+        self.last_text_color = text_color
         self.text_background_color = text_background_color
 
         self.alignment = {
@@ -117,6 +121,7 @@ class Text:
             
         self.inf_width = inf_width
         self.inf_height = inf_height
+        self.wrap = wrap
         
         self.const_size = const_size
         self.auto_fit = auto_fit
@@ -155,8 +160,11 @@ class Text:
         
     @property
     def characters(self):
-        self.block.pos = self.pos
+        self.block.pos = self.text_rect.topleft
         return self._characters
+        
+    def get_text(self):
+        return self.text
   
     def set_text(self, text):
         self.text = text
@@ -231,6 +239,7 @@ class Text:
 
             for line in lines:
                 for word in line:
+
                     word_rect = self.font.get_rect(word, size=size)
 
                     if not self.inf_height:
@@ -240,7 +249,7 @@ class Text:
                             
                     if not self.inf_width:
                         if x + word_rect.width >= max_width:
-                            if not current_line:
+                            if not current_line or not self.wrap:
                                 status = 2
                                 break
                             
@@ -273,8 +282,7 @@ class Text:
                         cx += character.horizontal_advance_x
 
                     current_line.add(current_word)
-                    if word:
-                        x += (cx - x)
+                    x += (cx - x)
 
                 if status:
                     break
@@ -347,7 +355,25 @@ class Text:
             tl = self.rect.topleft
             self.rect = surf.get_rect()
             self.rect.topleft = tl
-        
+
+    def render(self):
+        self.text_surf.fill((0, 0, 0, 0))
+        self.block.pos = (0, 0)
+        for line in self.block:
+            for word in line:
+                for character in word:
+                    if character.is_renderable:
+                        self.font.render_to(
+                            self.text_surf, 
+                            character.rect, 
+                            character.character,  
+                            size=character.size, 
+                            fgcolor=self.text_color
+                        )
+                    
     def draw_text(self, surf):
+        if self.text_color != self.last_text_color:
+            self.last_text_color = self.text_color
+            self.render()
         if self.text:
             surf.blit(self.text_surf, self.text_rect)

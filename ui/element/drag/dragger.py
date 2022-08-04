@@ -32,7 +32,11 @@ class Dragger:
         cls.LAST_LOG['draggers'].clear()
         return [logs]
     
-    def __init__(self):
+    def __init__(
+        self,
+        select_color=(255, 0, 0)
+    ):
+    
         self.held = False
         self.selected = False
         self.deselect_on_update = False
@@ -41,7 +45,9 @@ class Dragger:
         
         self.rel_pos = (0, 0)
         self.pickup_pos = None
-        self.held_timer = Timer()   
+        self.held_timer = Timer()  
+
+        self.select_color = select_color        
         
         Dragger.DRAGGERS.append(self)
         
@@ -131,7 +137,7 @@ class Dragger:
             if kd:
                 if kd.key == pg.K_a:
                     Dragger.select_all()
-                events.pop('kd')
+                    events.pop('kd')
 
         mbu = events.get('mbu')
         if mbu:
@@ -146,10 +152,12 @@ class Dragger:
         self.update_drag()
         super().update()
         
+    def draw_outline(self, surf):
         if self.selected:
-            self.outline_color = (0, 255, 0)
-            self.outline_width = 3
-        else:
-            self.outline_color = None
+            pg.draw.rect(
+                surf,
+                self.select_color,
+                self.outline_rect.inflate(6, 6)
+            )
         
         

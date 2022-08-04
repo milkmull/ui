@@ -20,8 +20,10 @@ class Style(Position):
         pad=None,
         left_pad=0,
         right_pad=0,
+        x_pad=None,
         top_pad=0,
         bottom_pad=0,
+        y_pad=None,
 
         **kwargs
     ):
@@ -42,7 +44,12 @@ class Style(Position):
 
         if pad is not None:
             left_pad = right_pad = top_pad = bottom_pad = pad
-        
+        else:
+            if x_pad is not None:
+                left_pad = right_pad = x_pad
+            if y_pad is not None:
+                top_pad = bottom_pad = y_pad
+
         self.pad = {
             'left': left_pad,
             'right': right_pad,
@@ -100,21 +107,23 @@ class Style(Position):
         self.pad['bottom'] = bottom
 
     def draw_rect(self, surf):
-        if self.fill_color and self.fill_color != self.key_color:
-            pg.draw.rect(
-                surf,
-                self.fill_color,
-                self.padded_rect,
-                **self.border_kwargs
-            )
+        fill = self.fill_color and self.fill_color != self.key_color
+        bk = self.border_kwargs
         if self.outline_color and self.outline_width:
             pg.draw.rect(
                 surf,
                 self.outline_color,
                 self.outline_rect,
-                width=self.outline_width,
-                **self.border_kwargs
-            )         
+                width=self.outline_width if not fill else self.outline_width * 2,
+                **bk
+            ) 
+        if fill:
+            pg.draw.rect(
+                surf,
+                self.fill_color,
+                self.padded_rect,
+                **bk
+            )        
             
     def draw(self, surf):
         self.draw_rect(surf)

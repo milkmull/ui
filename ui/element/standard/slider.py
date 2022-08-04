@@ -16,6 +16,7 @@ class Slider(Element):
         dir=0,
         flipped=False,
         handel_kwargs={},
+        state=None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -51,6 +52,10 @@ class Slider(Element):
                 bottom_limit=self.handel.rect.height // 2,
                 centerx_anchor='centerx'
             )
+            
+        if state is None:
+            state = self.range[0]
+        self.set_state(state)
         
     def flip(self):
         self.flipped = not self.flipped
@@ -94,25 +99,24 @@ class Slider(Element):
         elif self.dir == 1:
             dy = ratio * self.rect.height
             self.handel.rect.centery = dy + self.rect.y
+            
+        self.handel.set_stuck(False)
         self.handel.update_position()
+        self.handel.set_stuck(True)
 
     def get_hit(self):
         p = pg.mouse.get_pos()
-        return self.rect.collidepoint(p) or self.handel.rect.collidepoint(p)
+        return self.outline_rect.collidepoint(p) or self.handel.rect.collidepoint(p)
         
     def left_click(self):
         super().left_click()
         self.held = True
         self.handel.set_stuck(False)
         
-    def events(self, events):
-        super().events(events)
-        
-        mbu = events.get('mbu')
-        if mbu:
-            if mbu.button == 1:
-                self.held = False
-                self.handel.set_stuck(True)
+    def click_up(self, button):
+        if button == 1 and self.held:
+            self.held = False
+            self.handel.set_stuck(True)
                 
     def update(self):
         if self.held:

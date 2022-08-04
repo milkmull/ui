@@ -3,7 +3,8 @@ import pygame as pg
 from .style import Style
 
 from ..utils.event import Event
-from ..utils.animation import Animation
+from ..utils.animation.animation import Animation
+from ..utils.animation.sequence import Sequence
 from ..utils.timer import Timer
 
 class Element(Style):
@@ -41,10 +42,23 @@ class Element(Style):
         self.hover_timer = Timer()
         
     @property
-    def moving(self):
-        return any({a.attr in ('x', 'y', 'pos') for a in self.active_animations})
+    def total_rect(self):
+        self.update_position()
+        return self.outline_rect.unionall([c.total_rect for c in self.children if c.visible])
         
-    def add_event(self, func=None, args=None, kwargs=None, include_self=False, tag='update'):
+    @property
+    def moving(self):
+        return any({a.attr in ('x', 'y', 'pos') for s in self.active_animations for a in s.sequence})
+        
+    def add_event(self, 
+        func=None, 
+        args=None, 
+        kwargs=None, 
+        include_self=False,
+        
+        no_call=False,
+        tag='update'
+    ):
         if func is None:
             return
         if args is None:
@@ -53,7 +67,9 @@ class Element(Style):
             kwargs = {}
         if include_self:
             args.insert(0, self)
-        self.listeners.append(Event(func=func, args=args, kwargs=kwargs, tag=tag))
+        e = Event(func=func, args=args, kwargs=kwargs, no_call=no_call, tag=tag)
+        self.listeners.append(e)
+        return e
         
     def run_events(self, type):
         for e in self.listeners:
@@ -74,12 +90,16 @@ class Element(Style):
                 if r is not None:
                     return r
             
-    def add_animation(self, sequence, element=None, tag='temp'):
-        a = Animation(
-            element if element is not None else self, 
-            sequence, 
+    def add_animation(self, animations, tag='temp'):
+        for kwargs in animations:
+            if 'element' not in kwargs:
+                kwargs['element'] = self
+                
+        a = Sequence(
+            [Animation(**kwargs) for kwargs in animations], 
             tag=tag
         )
+        
         if tag == 'temp':
             self.active_animations.append(a)
         else:
@@ -94,10 +114,12 @@ class Element(Style):
                     self.active_animations.append(a)
                 a.start(reverse=reverse)
                     
-    def cancel_aimation(self, tag):
-        for a in self.active_animations.copy():
-            if a.tag == tag:
-                self.active_animations.remove(a)
+    def cancel_animation(self, tag):
+        for s in self.animations.copy():
+            if s.tag == tag:
+                s.cancel()
+                if s in self.active_animations:
+                    self.active_animations.remove(s)
                 
     def freeze_animation(self, type):
         self.frozen_animation_type = type
@@ -123,7 +145,7 @@ class Element(Style):
         
     def left_click(self):
         self.run_events('left_click')
-
+        
         if self.click_timer.time < Element.CLICK_TIMER_MAX:
             self.clicks += 1
         else:
@@ -132,6 +154,9 @@ class Element(Style):
         
     def right_click(self):
         self.run_events('right_click')
+        
+    def click_up(self, button):
+        self.run_events('click_up')
         
     def events(self, events):
         super().events(events)
@@ -160,6 +185,10 @@ class Element(Style):
             elif mbd.button == 3:
                 self.right_click()
         self.click = mbd
+        
+        mbu = events.get('mbu')
+        if mbu:
+            self.click_up(mbu.button)
 
     def update(self):
         self.update_animations()
@@ -171,10 +200,12 @@ class Element(Style):
         self.draw_rect(surf)
         if self.clip:
             clip = surf.get_clip()
-            surf.set_clip(self.rect)
+            surf.set_clip(self.padded_rect)
             super().draw(surf)
             surf.set_clip(clip)
         else:
             super().draw(surf)
+            
+        self.run_events('draw')
         
         

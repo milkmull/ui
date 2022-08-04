@@ -17,33 +17,31 @@ class Image:
         self, 
         
         image=None,
-        colorkey=None,
-        
-        const_size=True,
+
         auto_fit=False,
         keep_aspect=True,
+        
+        rotation=0,
         
         **kwargs
     ):
 
-        if colorkey:
-            image.set_colorkey(colorkey)
         self.original_image = image
         self.image = image.copy() if image else None
-        self.colorkey = colorkey
-        
+
         if self.size == (0, 0):
             auto_fit = True
-        self.const_size = const_size
         self.auto_fit = auto_fit
         self.keep_aspect = keep_aspect
+        
+        self._rotation = rotation
 
         self.fit_image()
 
     @property
     def image_size(self):
-        if self.original_image:
-            return self.original_image.get_size()
+        if self.image:
+            return self.image.get_size()
         return self.rect.size
         
     @property
@@ -52,33 +50,46 @@ class Image:
         r.center = self.rect.center
         return r
         
-    def set_colorkey(self, colorkey=None):
-        if colorkey:
-            self.original_image.set_colorkey(colorkey)
-            self.image.set_colorkey(colorkey)
-        self.colorkey = colorkey
+    @property
+    def alpha(self):
+        return self.image.get_alpha()
+        
+    @alpha.setter
+    def alpha(self, alpha):
+        self.image.set_alpha(alpha)
+        
+    @property
+    def rotation(self):
+        return self._rotation
+        
+    @rotation.setter
+    def rotation(self, rotation):
+        self._rotation = rotation
+        self.fit_image()
         
     def fill(self, color):
-        self.original_image.fill(color)
         self.image.fill(color)
         
     def reset_image(self):
-        self.image = self.original_image.copy()
-        
-    def refresh_image(self):
-        self.image.blit(self.original_image, (0, 0))
+        self.set_image(
+            self.original_image.copy(),
+            overwrite=False
+        )
         
     def set_image(self, image, overwrite=True):
         self.image = image
         if overwrite:
             self.original_image = image.copy()
-            self.fit_image()
+        self.fit_image()
             
-    def transform(self, mode, *args, **kwargs):
-        self.image = getattr(pg.transform, mode)(self.image, *args, **kwargs)
+    def transform(self, mode, *args, overwrite=False, **kwargs):
+        self.set_image(
+            getattr(pg.transform, mode)(self.original_image, *args, **kwargs),
+            overwrite=overwrite
+        )
             
     def get_scaled(self, size):
-        return pg.transform.smoothscale(self.original_image, size)
+        return pg.transform.smoothscale(self.image, size)
         
     def scale(self, size):
         w, h = size
@@ -86,30 +97,32 @@ class Image:
             w = 0
         if h < 0:
             h = 0
-        self.set_image(self.get_scaled((w, h)), overwrite=False)
+        self.image = self.get_scaled((w, h))
         
     def scale_by_factor(self, factor):
         if factor != 1:
-            w, h = self.image_size
+            w, h = self.image.get_size()
             self.scale((w * factor, h * factor))
 
     def fit_image(self):
         if self.image:
+            
+            if self.rotation:
+                self.image = pg.transform.rotate(self.original_image, self.rotation)
         
             if self.auto_fit:
                 self.rect.size = self.image_size
 
-            elif not self.const_size:
-                if self.keep_aspect:
-                    w, h = self.image_size
-                    if w > h:
-                        factor = self.rect.width / w
-                    else:
-                        factor = self.rect.height / h
-                    self.scale_by_factor(factor)
+            if self.keep_aspect:
+                w, h = self.image.get_size()
+                factor = min({
+                    self.rect.width / w,
+                    self.rect.height / h
+                })
+                self.scale_by_factor(factor)
                     
-                else:
-                    self.scale(self.size)
+            elif not self.auto_fit:
+                self.scale(self.size)
         
     def fit_to_image(self, width=False, height=False):
         w, h = self.image_size

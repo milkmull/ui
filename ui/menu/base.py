@@ -100,11 +100,18 @@ class Base_Loop:
         
         if 'cursor_set' not in events:
             pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
+            
+        return events
         
     def update(self):
         for e in self.elements:
             if e.refresh:
                 e.update()
+                
+    def lite_draw(self):
+        for e in sorted(self.elements, key=lambda e: e.layer):
+            if e.visible:
+                e.draw(self.window)
 
     def draw(self):
         self.window.fill(self.fill_color)

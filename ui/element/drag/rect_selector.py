@@ -12,7 +12,7 @@ class Rect_Selector(Base_Element):
         color=(255, 0, 0),
         line_width=2,
         
-        layer=20,
+        layer=-20,
         
         **kwargs
     ):
@@ -35,14 +35,12 @@ class Rect_Selector(Base_Element):
                 d.select()
         
     def events(self, events):
-        mbd = events.get('mbd')
-        if mbd:
+        if mbd := events.get('mbd'):
             if mbd.button == 1:
                 self.anchor = mbd.pos
-            events.pop('mbd')
-            
-        mbu = events.get('mbu')
-        if mbu:
+                events.pop('mbd')
+
+        if mbu := events.get('mbu'):
             if mbu.button == 1:
                 self.select()
                 self.anchor = None

@@ -12,7 +12,7 @@ def quit():
     pg.quit()
 
 def get_constants():
-    w, h = pg.display.get_window_size()
+    w, h = pg.display.get_surface().get_size()
     constants = {
         'WIDTH': w,
         'HEIGHT': h,
@@ -25,5 +25,5 @@ def get_constants():
     return constants
     
 def get_size():
-    return pg.display.get_window_size()
+    return pg.display.get_surface().get_size()
     

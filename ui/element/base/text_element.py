@@ -15,11 +15,15 @@ class Text_Element(Element, Text):
         self.rect.size = size
         self.fit_text()
         
+    def set_text(self, text):
+        super().set_text(text)
+        self.run_events('set')
+        
     def draw(self, surf):
         self.draw_rect(surf)
         if self.clip:
             clip = surf.get_clip()
-            surf.set_clip(self.rect)
+            surf.set_clip(self.padded_rect)
             self.draw_text(surf)
             self.child_draw(surf)
             surf.set_clip(clip)

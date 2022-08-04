@@ -11,21 +11,28 @@ class Base_Element:
         self,
         tag='',
         layer=None,
-
-        scene=None,
+        
+        events=None,
+        update=None,
+        draw=None,
 
         **kwargs
     ):
         
         self._id = Base_Element.new_id()
         self.tag = tag
-        self.layer = layer if layer is not None else self._id
+        self.layer = layer if layer is not None else 0
+        
+        if events:
+            self.events = events
+        if update:
+            self.update = update
+        if draw:
+            self.draw = draw
 
         self.enabled = True
         self.refresh = True
         self.visible = True
-
-        self.scene = scene
 
         self.leftover_kwargs = kwargs
         

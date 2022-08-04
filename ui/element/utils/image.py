@@ -43,3 +43,25 @@ def crop(img, x, y, w, h):
     
 def transform(mode, *args, **kwargs):
     return getattr(pg.transform, mode)(*args, **kwargs)
+    
+def gradient(colors, dir, size, angle=0):
+    if dir:
+        surf = pg.Surface((1, len(colors))).convert()
+        for y, color in enumerate(colors):
+            surf.set_at((0, y), color)
+            
+    else:
+        surf = pg.Surface((len(colors), 1)).convert()
+        for x, color in enumerate(colors):
+            surf.set_at((x, 0), color)
+            
+    return pg.transform.roto_zoom(surf, angle, size)
+
+
+
+
+
+
+
+
+
